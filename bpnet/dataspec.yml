@@ -1,0 +1,8 @@
+fasta_file: /share/quonlab/workspaces/ricsharma/data/hg19.fa  # using subset
+zscore_file: /share/quonlab/workspaces/ricsharma/data/dripc/rep1/plus.bw
+task_specs:  # specifies multiple tasks (e.g. Oct4, Sox2 Nanog)
+  rep1:
+    tracks:
+      - /share/quonlab/workspaces/ricsharma/data/dripc/rep1/plus.bw
+      - /share/quonlab/workspaces/ricsharma/data/dripc/rep1/minus.bw
+    peaks: /share/quonlab/workspaces/ricsharma/data/dripc/peaks.bed.gz
