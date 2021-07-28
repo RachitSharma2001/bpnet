@@ -14,7 +14,7 @@ import bpnet.metrics
 import bpnet.configurables
 
 train.model = @SeqModel()
-SeqModel.input_shape = (2500, 35)
+SeqModel.input_shape = (2500, 31)
 SeqModel.seqlen = %seq_width
 SeqModel.tasks = %tasks
 SeqModel.optimizer = @keras.optimizers.Adam()
@@ -25,9 +25,9 @@ keras.optimizers.Adam.lr = %lr
 # changed the trainer class to my trainer class in order to batchnorm
 train.trainer_cls = @GpuSeqModelTrainer
 # inclusive, 0 indexed
-GpuSeqModelTrainer.batchnorm_begin = 4
+GpuSeqModelTrainer.batchnorm_begin = 0
 # inclusive, 0 indexed
-GpuSeqModelTrainer.batchnorm_end = 34
+GpuSeqModelTrainer.batchnorm_end = 30
 GpuSeqModelTrainer.print_test = False
 
 # Need to specify extra channels in StrandedProfile
@@ -62,7 +62,7 @@ AddedChannels_StrandedProfile.additional_bw_channels = ['/share/quonlab/workspac
                                             '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/gc_skew_25.bw',
                                             '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/NT2_RNAseq_rep1.bw',
                                             '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/purine_skew_50.bw']
-AddedChannels_StrandedProfile.exclude_dna = False
+AddedChannels_StrandedProfile.exclude_dna = True
 
 # - Body
 DilatedConv1D.filters = %filters
