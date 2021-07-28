@@ -222,7 +222,11 @@ train.validation_samples = None
 SeqModel.input_shape = (%seq_width, 31)
 
 # Specify additional channels
-AddedChannels_StrandedProfile.additional_bw_channels = ['/share/quonlab/workspaces/ricsharma/data/bpp_500_f.bw',
+AddedChannels_StrandedProfile.additional_bw_channels = ['/share/quonlab/workspaces/ricsharma/data/bpp_100_f.bw',
+                                            '/share/quonlab/workspaces/ricsharma/data/bpp_100_r.bw',
+                                            '/share/quonlab/workspaces/ricsharma/data/bpp_250_f.bw',
+                                            '/share/quonlab/workspaces/ricsharma/data/bpp_250_r.bw',
+                                            '/share/quonlab/workspaces/ricsharma/data/bpp_500_f.bw',
                                             '/share/quonlab/workspaces/ricsharma/data/bpp_500_r.bw',
                                             '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/100_neg_gc_skew.bw',
                                             '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/25_neg_purine_skew.bw',
@@ -249,13 +253,13 @@ AddedChannels_StrandedProfile.additional_bw_channels = ['/share/quonlab/workspac
                                             '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/gc_skew_25.bw',
                                             '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/NT2_RNAseq_rep1.bw',
                                             '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/purine_skew_50.bw']
-AddedChannels_StrandedProfile.exclude_dna = False
+AddedChannels_StrandedProfile.exclude_dna = True
 
 # Specify Trainer class
 train.trainer_cls = @GpuSeqModelTrainer
-GpuSeqModelTrainer.batchnorm_begin = 4
-GpuSeqModelTrainer.batchnorm_end = 31
-GpuSeqModelTrainer.print_test = False
+GpuSeqModelTrainer.batchnorm_begin = 0
+GpuSeqModelTrainer.batchnorm_end = 30
+GpuSeqModelTrainer.print_test = True
 
 # Basic training setup
 train.seed = 1
