@@ -245,7 +245,7 @@ class GpuSeqModelTrainer:
 
         # Convert the given datasets (of type NumpyDataset) to our own class, which batchnorms input
         self.train_dataset = BatchNormDataset(train_dataset, batchnorm_begin, batchnorm_end, print_test)
-        self.valid_dataset = [(valid_dataset[0][0], OurNumpyDataset(valid_dataset[0][1], batchnorm_begin, batchnorm_end)), (valid_dataset[1][0], OurNumpyDataset(valid_dataset[1][1], batchnorm_begin, batchnorm_end))]
+        self.valid_dataset = [(valid_dataset[0][0], BatchNormDataset(valid_dataset[0][1], batchnorm_begin, batchnorm_end)), (valid_dataset[1][0], BatchNormDataset(valid_dataset[1][1], batchnorm_begin, batchnorm_end))]
 
         # Sanity Check
         if(print_test is True):

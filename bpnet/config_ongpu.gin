@@ -1,4 +1,3 @@
-# --------------------------------------------
 # model
 import bpnet
 import bpnet.models
@@ -13,24 +12,216 @@ import datasets_ongpu
 import bpnet.metrics
 import bpnet.configurables
 
-train.model = @SeqModel()
-SeqModel.input_shape = (2500, 31)
+# Macros:
+# ==============================================================================
+augment_interval = True
+batchnorm = False
+dataspec = 'dataspec.yml'
+exclude_chr = []
+filters = 64
+lambda = 1
+lr = 1e-05
+n_bias_tracks = 0
+n_dil_layers = 11
+seq_width = 10000
+tasks = ['rep1']
+tconv_kernel_size = 25
+test_chr = ['chr6', 'chr7', 'chr8']
+tracks_per_task = 2
+use_bias = False
+valid_chr = ['chr5']
+
+# Parameters for Adam:
+# ==============================================================================
+Adam.amsgrad = False
+Adam.beta_1 = 0.9
+Adam.beta_2 = 0.999
+Adam.decay = 0.0
+Adam.epsilon = None
+Adam.lr = %lr
+
+# Parameters for bpnet_data:
+# ==============================================================================
+my_bpnet_data.augment_interval = %augment_interval
+my_bpnet_data.dataspec = %dataspec
+my_bpnet_data.exclude_chr = %exclude_chr
+my_bpnet_data.include_metadata = False
+my_bpnet_data.interval_augmentation_shift = 200
+my_bpnet_data.intervals_file = None
+my_bpnet_data.intervals_format = 'bed'
+my_bpnet_data.peak_width = %seq_width
+my_bpnet_data.seq_width = %seq_width
+my_bpnet_data.shuffle = True
+my_bpnet_data.tasks = %tasks
+my_bpnet_data.test_chr = %test_chr
+my_bpnet_data.track_transform = None
+my_bpnet_data.valid_chr = %valid_chr
+
+# Parameters for ClassificationMetrics:
+# ==============================================================================
+# None.
+
+# Parameters for DeConv1D:
+# ==============================================================================
+DeConv1D.batchnorm = %batchnorm
+DeConv1D.filters = %filters
+DeConv1D.n_hidden = 0
+DeConv1D.n_tasks = %tracks_per_task
+DeConv1D.padding = 'same'
+DeConv1D.tconv_kernel_size = %tconv_kernel_size
+
+# Parameters for DilatedConv1D:
+# ==============================================================================
+DilatedConv1D.add_pointwise = False
+DilatedConv1D.batchnorm = %batchnorm
+DilatedConv1D.conv1_kernel_size = 100
+DilatedConv1D.filters = %filters
+DilatedConv1D.n_dil_layers = %n_dil_layers
+DilatedConv1D.padding = 'same'
+DilatedConv1D.skip_type = 'residual'
+
+# Parameters for GlobalAvgPoolFCN:
+# ==============================================================================
+GlobalAvgPoolFCN.batchnorm = %batchnorm
+GlobalAvgPoolFCN.dropout = 0
+GlobalAvgPoolFCN.dropout_hidden = 0
+GlobalAvgPoolFCN.hidden = None
+GlobalAvgPoolFCN.n_splines = 0
+GlobalAvgPoolFCN.n_tasks = %tracks_per_task
+
+# Parameters for IntervalAugmentor:
+# ==============================================================================
+# None.
+
+# Parameters for MetricsOrderedDict:
+# ==============================================================================
+# None.
+
+# Parameters for MovingAverages:
+# ==============================================================================
+MovingAverages.window_sizes = [1, 50]
+
+# Parameters for multinomial_nll:
+# ==============================================================================
+# None.
+
+# Parameters for PeakPredictionProfileMetric:
+# ==============================================================================
+PeakPredictionProfileMetric.binsizes = [1, 10]
+PeakPredictionProfileMetric.neg_max_threshold = 0.005
+PeakPredictionProfileMetric.pos_min_threshold = 0.015
+PeakPredictionProfileMetric.required_min_pos_counts = 2.5
+
+# Parameters for ProfileHead:
+# ==============================================================================
+ProfileHead.activation = None
+ProfileHead.bias_input = 'bias/{task}/profile'
+ProfileHead.bias_net = @MovingAverages()
+ProfileHead.bias_shape = (None, %n_bias_tracks)
+ProfileHead.loss = @multinomial_nll
+ProfileHead.loss_weight = 1
+ProfileHead.metric = @PeakPredictionProfileMetric()
+ProfileHead.net = @DeConv1D()
+ProfileHead.postproc_fn = @softmax
+ProfileHead.target_name = '{task}/profile'
+ProfileHead.use_bias = %use_bias
+
+# Parameters for RegressionMetrics:
+# ==============================================================================
+# None.
+
+# Parameters for report_template:
+# ==============================================================================
+report_template.name = 'evaluate.ipynb'
+report_template.raise_error = True
+
+# Parameters for ScalarHead:
+# ==============================================================================
+ScalarHead.activation = None
+ScalarHead.bias_input = 'bias/{task}/counts'
+ScalarHead.bias_net = None
+ScalarHead.bias_shape = (%n_bias_tracks,)
+ScalarHead.loss = 'mse'
+ScalarHead.loss_weight = %lambda
+ScalarHead.metric = @RegressionMetrics()
+ScalarHead.net = @GlobalAvgPoolFCN()
+ScalarHead.postproc_fn = None
+ScalarHead.target_name = '{task}/counts'
+ScalarHead.use_bias = %use_bias
+
+# Parameters for SeqModel:
+# ==============================================================================
+SeqModel.body = @DilatedConv1D()
+SeqModel.heads = [@ProfileHead(), @ScalarHead()]
+SeqModel.input_name = 'seq'
+SeqModel.input_shape = (%seq_width, 23)
+SeqModel.optimizer = @keras.optimizers.Adam()
 SeqModel.seqlen = %seq_width
 SeqModel.tasks = %tasks
-SeqModel.optimizer = @keras.optimizers.Adam()
-SeqModel.heads = [@ProfileHead(), @ScalarHead()]  # Heads
-SeqModel.body = @DilatedConv1D()  # Body
-keras.optimizers.Adam.lr = %lr
 
-# changed the trainer class to my trainer class in order to batchnorm
-train.trainer_cls = @GpuSeqModelTrainer
-# inclusive, 0 indexed
-GpuSeqModelTrainer.batchnorm_begin = 0
-# inclusive, 0 indexed
-GpuSeqModelTrainer.batchnorm_end = 30
-GpuSeqModelTrainer.print_test = False
+# Parameters for StrandedProfile:
+# ==============================================================================
+AddedChannels_StrandedProfile.additional_bw_channels = ['/share/quonlab/workspaces/ricsharma/data/bpp_100_f.bw',
+                                            '/share/quonlab/workspaces/ricsharma/data/bpp_100_r.bw',
+                                            '/share/quonlab/workspaces/ricsharma/data/bpp_250_f.bw',
+                                            '/share/quonlab/workspaces/ricsharma/data/bpp_250_r.bw',
+                                            '/share/quonlab/workspaces/ricsharma/data/bpp_500_f.bw',
+                                            '/share/quonlab/workspaces/ricsharma/data/bpp_500_r.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/100_neg_gc_skew.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/25_neg_purine_skew.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/gc_content_25.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/gc_skew_50.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/NT2_RNAseq_rep2.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/100_neg_purine_skew.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/50_neg_gc_skew.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/gc_content_50.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/GeneAnnotations_neg.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/purine_skew_100.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/250_neg_gc_skew.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/50_neg_purine_skew.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/gc_skew_100.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/GeneAnnotations_pos.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/purine_skew_250.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/250_neg_purine_skew.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/gc_content_100.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/gc_skew_250.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/Methyl.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/purine_skew_25.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/25_neg_gc_skew.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/gc_content_250.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/gc_skew_25.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/NT2_RNAseq_rep1.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/purine_skew_50.bw']
+AddedChannels_StrandedProfile.exclude_dna = False
+AddedChannels_StrandedProfile.excl_chromosomes = None
+AddedChannels_StrandedProfile.include_classes = False
 
-# Need to specify extra channels in StrandedProfile
+# Parameters for train:
+# ==============================================================================
+train.batch_size = 16
+train.data = @my_bpnet_data()
+train.early_stop_patience = 80
+train.epochs = 50
+train.eval_metric = None
+train.eval_report = @report_template()
+train.eval_skip = []
+train.eval_train = False
+train.model = @SeqModel()
+train.seed = 1
+train.stratified_sampler_p = None
+train.tensorboard = True
+train.train_batch_sampler = None
+train.train_epoch_frac = 1.0
+train.train_samples_per_epoch = None
+train.valid_epoch_frac = 1.0
+train.validation_samples = None
+
+# Added Parameters that depend on CPU or GPU, or changes per model:
+# ==============================================================================
+# Changes to make the multiple channels work
+SeqModel.input_shape = (%seq_width, 31)
+
+# Specify additional channels
 AddedChannels_StrandedProfile.additional_bw_channels = ['/share/quonlab/workspaces/ricsharma/data/bpp_100_f.bw',
                                             '/share/quonlab/workspaces/ricsharma/data/bpp_100_r.bw',
                                             '/share/quonlab/workspaces/ricsharma/data/bpp_250_f.bw',
@@ -64,119 +255,34 @@ AddedChannels_StrandedProfile.additional_bw_channels = ['/share/quonlab/workspac
                                             '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/purine_skew_50.bw']
 AddedChannels_StrandedProfile.exclude_dna = True
 
-# - Body
-DilatedConv1D.filters = %filters
-DilatedConv1D.conv1_kernel_size = 25
-DilatedConv1D.n_dil_layers = %n_dil_layers
-DilatedConv1D.padding = 'same'
-DilatedConv1D.batchnorm = %batchnorm
-DilatedConv1D.skip_type = 'residual'
+# Specify Trainer class
+train.trainer_cls = @GpuSeqModelTrainer
+GpuSeqModelTrainer.batchnorm_begin = 0
+GpuSeqModelTrainer.batchnorm_end = 30
+GpuSeqModelTrainer.print_test = False
 
-# - Heads
-#   - Profile prediction
-ProfileHead.target_name = '{task}/profile'
-ProfileHead.net = @DeConv1D()
-
-DeConv1D.n_tasks = %tracks_per_task
-DeConv1D.filters = %filters
-DeConv1D.tconv_kernel_size = %tconv_kernel_size
-DeConv1D.padding = 'same'
-DeConv1D.n_hidden = 0
-DeConv1D.batchnorm = %batchnorm
-
-ProfileHead.loss = @multinomial_nll
-ProfileHead.loss_weight = 1
-ProfileHead.postproc_fn = @softmax
-ProfileHead.use_bias = %use_bias
-ProfileHead.bias_input = 'bias/{task}/profile'
-ProfileHead.bias_shape = (None, %n_bias_tracks)
-ProfileHead.bias_net = @MovingAverages()
-MovingAverages.window_sizes = [1, 50]
-
-#      - evaluate
-ProfileHead.metric = @PeakPredictionProfileMetric()
-PeakPredictionProfileMetric.pos_min_threshold = 0.015
-PeakPredictionProfileMetric.neg_max_threshold = 0.005
-PeakPredictionProfileMetric.required_min_pos_counts = 2.5
-PeakPredictionProfileMetric.binsizes = [1, 10]
-# ---------------------
-
-#   - Total count prediction
-ScalarHead.target_name = '{task}/counts'
-ScalarHead.net = @GlobalAvgPoolFCN()
-GlobalAvgPoolFCN.n_tasks = %tracks_per_task
-GlobalAvgPoolFCN.n_splines = 0
-GlobalAvgPoolFCN.batchnorm = %batchnorm
-ScalarHead.loss = 'mse'
-ScalarHead.loss_weight = %lambda
-ScalarHead.bias_input = 'bias/{task}/counts'
-ScalarHead.use_bias = %use_bias
-ScalarHead.bias_shape = (%n_bias_tracks, )
-ScalarHead.metric = @RegressionMetrics()
-
-# --------------------------------------------
-# training
+# Basic training setup
 train.seed = 1
-train.batch_size = 128
-train.epochs = 1
-train.early_stop_patience = 100
-train.num_workers = 6
+train.epochs = 100
+lr = 0.00001
+lambda = 1
 
-# --------------------------------------------
-# data
-# TODO - shall we try to avoid macros as much as possible?
+# Architecture Changes
+seq_width = 10000
+DilatedConv1D.conv1_kernel_size = 100
+n_dil_layers = 11
 
-# seq_width  -> specified from gin-bindings
-train.data = @my_bpnet_data()
-my_bpnet_data.peak_width = %seq_width
-my_bpnet_data.valid_chr = %valid_chr
-my_bpnet_data.test_chr = %test_chr
-my_bpnet_data.include_metadata = False
-my_bpnet_data.tasks = %tasks
-my_bpnet_data.exclude_chr = %exclude_chr
-my_bpnet_data.augment_interval = %augment_interval
-my_bpnet_data.interval_augmentation_shift = 200
-my_bpnet_data.intervals_format = 'bed'
+# Due to memory issues
+train.batch_size = 16
 
-# transform the bias track by aggregating it in a
-# sliding window fashion with window sizes of 1 bp (no aggregation) and 50 bp
-
-# TODO - move that into the model -> apply two convolutional layers with constant width
-
-# specified from the CLI
-my_bpnet_data.dataspec = %dataspec
-my_bpnet_data.seq_width = %seq_width
-train.train_epoch_frac = 1.0
-train.valid_epoch_frac = 1.0
-
-train.eval_report = @report_template()
-report_template.name = 'evaluate.ipynb'
-
-# ============================================
-# Macros
-augment_interval = True
-
-lambda = 10  # count loss weight
-filters = 64
-tconv_kernel_size = 25
-lr = 0.004
-n_dil_layers = 1
-train.batch_size = 128
-batchnorm = False
-seq_width = 2500
-# TODO - mention the usage of macros
-
-# TODO - important parameters you might want to adjust
+# Specifications for train, validation, and test split
+# training: chr 1 - 4, 9 - 22, X, Y
+# validation: chr 5
+# test: chr 6 - 8
+exclude_chr=[]
 valid_chr = ['chr5']
 test_chr = ['chr6', 'chr7', 'chr8']
-# ============================================
-# These parameters will be specified from the command line
-# (i.e. in `bpnet.cli.train.bpnet_train` function)
 
-# TODO - specified in the training function
-# tracks_per_task = 2
-# use_bias = True  # set to False if you would like to not use the bias in the model
-# n_bias_tracks = 2
-# dataspec = 'ChIP-nexus.dataspec.yml'
-# tasks = ['Oct4', 'Sox2', 'Nanog', 'Klf4']
+# Uncomment for early stopping
+train.early_stop_patience = 80
 
