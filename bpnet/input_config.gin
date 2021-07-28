@@ -1,0 +1,67 @@
+# Changes to make the multiple channels work
+SeqModel.input_shape = (%seq_width, 35)
+
+# Specify additional channels
+AddedChannels_StrandedProfile.additional_bw_channels = ['/share/quonlab/workspaces/ricsharma/data/bpp_100_f.bw',
+                                            '/share/quonlab/workspaces/ricsharma/data/bpp_100_r.bw',
+                                            '/share/quonlab/workspaces/ricsharma/data/bpp_250_f.bw',
+                                            '/share/quonlab/workspaces/ricsharma/data/bpp_250_r.bw',
+                                            '/share/quonlab/workspaces/ricsharma/data/bpp_500_f.bw',
+                                            '/share/quonlab/workspaces/ricsharma/data/bpp_500_r.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/100_neg_gc_skew.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/25_neg_purine_skew.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/gc_content_25.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/gc_skew_50.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/NT2_RNAseq_rep2.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/100_neg_purine_skew.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/50_neg_gc_skew.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/gc_content_50.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/GeneAnnotations_neg.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/purine_skew_100.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/250_neg_gc_skew.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/50_neg_purine_skew.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/gc_skew_100.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/GeneAnnotations_pos.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/purine_skew_250.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/250_neg_purine_skew.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/gc_content_100.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/gc_skew_250.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/Methyl.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/purine_skew_25.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/25_neg_gc_skew.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/gc_content_250.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/gc_skew_25.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/NT2_RNAseq_rep1.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/purine_skew_50.bw']
+AddedChannels_StrandedProfile.exclude_dna = False
+
+# Specify Trainer class
+train.trainer_cls = @CpuSeqModelTrainer
+CpuSeqModelTrainer.start_index = 0
+CpuSeqModelTrainer.end_index = 30
+
+# Basic training setup
+train.seed = 1
+train.epochs = 100
+lr = 0.00001
+lambda = 1
+
+# Architecture Changes
+seq_width = 10000
+DilatedConv1D.conv1_kernel_size = 100
+n_dil_layers = 11
+
+# Due to memory issues
+train.batch_size = 16
+
+# Specifications for train, validation, and test split
+# training: chr 1 - 4, 9 - 22, X, Y
+# validation: chr 5
+# test: chr 6 - 8
+exclude_chr=[]
+valid_chr = ['chr5']
+test_chr = ['chr6', 'chr7', 'chr8']
+
+# Uncomment for early stopping
+train.early_stop_patience = 100
+

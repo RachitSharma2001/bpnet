@@ -1,0 +1,48 @@
+# Added Parameters that depend on CPU or GPU, or changes per model:
+# ==============================================================================
+
+# Parameters
+train.epochs = 1
+lr = 0.00001
+
+# Specify Trainer class
+train.trainer_cls = @CpuSeqModelTrainer
+CpuSeqModelTrainer.start_index = 0
+CpuSeqModelTrainer.end_index = 30
+
+# Specify additional channels
+AddedChannels_StrandedProfile.additional_bw_channels = ['/share/quonlab/workspaces/ricsharma/data/bpp_100_f.bw',
+                                            '/share/quonlab/workspaces/ricsharma/data/bpp_100_r.bw',
+                                            '/share/quonlab/workspaces/ricsharma/data/bpp_250_f.bw',
+                                            '/share/quonlab/workspaces/ricsharma/data/bpp_250_r.bw',
+                                            '/share/quonlab/workspaces/ricsharma/data/bpp_500_f.bw',
+                                            '/share/quonlab/workspaces/ricsharma/data/bpp_500_r.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/100_neg_gc_skew.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/25_neg_purine_skew.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/gc_content_25.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/gc_skew_50.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/NT2_RNAseq_rep2.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/100_neg_purine_skew.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/50_neg_gc_skew.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/gc_content_50.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/GeneAnnotations_neg.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/purine_skew_100.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/250_neg_gc_skew.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/50_neg_purine_skew.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/gc_skew_100.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/GeneAnnotations_pos.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/purine_skew_250.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/250_neg_purine_skew.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/gc_content_100.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/gc_skew_250.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/Methyl.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/purine_skew_25.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/25_neg_gc_skew.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/gc_content_250.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/gc_skew_25.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/NT2_RNAseq_rep1.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/purine_skew_50.bw']
+AddedChannels_StrandedProfile.exclude_dna = False
+
+# Specify inputs shape
+SeqModel.input_shape = (%seqwidth, 35)

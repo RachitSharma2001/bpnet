@@ -715,4 +715,3 @@ def chrom_dataset(dataset_cls,
 
 def get(name):
     return get_from_module(name, globals())
-

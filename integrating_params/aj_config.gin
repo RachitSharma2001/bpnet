@@ -8,8 +8,6 @@ import bpnet.metrics
 import bpnet.models
 import bpnet.seqmodel
 import bpnet.trainers
-import datasets_oncpu
-import trainers_oncpu
 
 # Macros:
 # ==============================================================================
@@ -39,43 +37,22 @@ Adam.decay = 0.0
 Adam.epsilon = None
 Adam.lr = %lr
 
-# Parameters for AddedChannels_StrandedProfile:
+# Parameters for bpnet_data:
 # ==============================================================================
-AddedChannels_StrandedProfile.additional_bw_channels = \
-    ['/share/quonlab/workspaces/ricsharma/data/bpp_100_f.bw',
-     '/share/quonlab/workspaces/ricsharma/data/bpp_100_r.bw',
-     '/share/quonlab/workspaces/ricsharma/data/bpp_250_f.bw',
-     '/share/quonlab/workspaces/ricsharma/data/bpp_250_r.bw',
-     '/share/quonlab/workspaces/ricsharma/data/bpp_500_f.bw',
-     '/share/quonlab/workspaces/ricsharma/data/bpp_500_r.bw',
-     '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/100_neg_gc_skew.bw',
-     '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/25_neg_purine_skew.bw',
-     '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/gc_content_25.bw',
-     '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/gc_skew_50.bw',
-     '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/NT2_RNAseq_rep2.bw',
-     '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/100_neg_purine_skew.bw',
-     '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/50_neg_gc_skew.bw',
-     '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/gc_content_50.bw',
-     '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/GeneAnnotations_neg.bw',
-     '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/purine_skew_100.bw',
-     '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/250_neg_gc_skew.bw',
-     '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/50_neg_purine_skew.bw',
-     '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/gc_skew_100.bw',
-     '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/GeneAnnotations_pos.bw',
-     '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/purine_skew_250.bw',
-     '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/250_neg_purine_skew.bw',
-     '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/gc_content_100.bw',
-     '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/gc_skew_250.bw',
-     '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/Methyl.bw',
-     '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/purine_skew_25.bw',
-     '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/25_neg_gc_skew.bw',
-     '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/gc_content_250.bw',
-     '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/gc_skew_25.bw',
-     '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/NT2_RNAseq_rep1.bw',
-     '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/purine_skew_50.bw']
-AddedChannels_StrandedProfile.excl_chromosomes = None
-AddedChannels_StrandedProfile.exclude_dna = False
-AddedChannels_StrandedProfile.include_classes = False
+bpnet_data.augment_interval = %augment_interval
+bpnet_data.dataspec = %dataspec
+bpnet_data.exclude_chr = %exclude_chr
+bpnet_data.include_metadata = False
+bpnet_data.interval_augmentation_shift = 200
+bpnet_data.intervals_file = None
+bpnet_data.intervals_format = 'bed'
+bpnet_data.peak_width = %seq_width
+bpnet_data.seq_width = %seq_width
+bpnet_data.shuffle = True
+bpnet_data.tasks = %tasks
+bpnet_data.test_chr = %test_chr
+bpnet_data.track_transform = None
+bpnet_data.valid_chr = %valid_chr
 
 # Parameters for ClassificationMetrics:
 # ==============================================================================
@@ -124,23 +101,6 @@ MovingAverages.window_sizes = [1, 50]
 # Parameters for multinomial_nll:
 # ==============================================================================
 # None.
-
-# Parameters for my_bpnet_data:
-# ==============================================================================
-my_bpnet_data.augment_interval = %augment_interval
-my_bpnet_data.dataspec = %dataspec
-my_bpnet_data.exclude_chr = %exclude_chr
-my_bpnet_data.include_metadata = False
-my_bpnet_data.interval_augmentation_shift = 200
-my_bpnet_data.intervals_file = None
-my_bpnet_data.intervals_format = 'bed'
-my_bpnet_data.peak_width = %seq_width
-my_bpnet_data.seq_width = %seq_width
-my_bpnet_data.shuffle = True
-my_bpnet_data.tasks = %tasks
-my_bpnet_data.test_chr = %test_chr
-my_bpnet_data.track_transform = None
-my_bpnet_data.valid_chr = %valid_chr
 
 # Parameters for PeakPredictionProfileMetric:
 # ==============================================================================
@@ -191,17 +151,42 @@ ScalarHead.use_bias = %use_bias
 SeqModel.body = @DilatedConv1D()
 SeqModel.heads = [@ProfileHead(), @ScalarHead()]
 SeqModel.input_name = 'seq'
-SeqModel.input_shape = (%seq_width, 35)
+SeqModel.input_shape = (%seq_width, 23)
 SeqModel.optimizer = @keras.optimizers.Adam()
 SeqModel.seqlen = %seq_width
 SeqModel.tasks = %tasks
 
+# Parameters for StrandedProfile:
+# ==============================================================================
+StrandedProfile.additional_input_bigwigs = \
+    ['/share/quonlab/workspaces/ajstanley/bigwig/all_tracks/100_neg_gc_skew.bw',
+     '/share/quonlab/workspaces/ajstanley/bigwig/all_tracks/100_neg_purine_skew.bw',
+     '/share/quonlab/workspaces/ajstanley/bigwig/all_tracks/250_neg_gc_skew.bw',
+     '/share/quonlab/workspaces/ajstanley/bigwig/all_tracks/250_neg_purine_skew.bw',
+     '/share/quonlab/workspaces/ajstanley/bigwig/all_tracks/25_neg_gc_skew.bw',
+     '/share/quonlab/workspaces/ajstanley/bigwig/all_tracks/25_neg_purine_skew.bw',
+     '/share/quonlab/workspaces/ajstanley/bigwig/all_tracks/50_neg_purine_skew.bw',
+     '/share/quonlab/workspaces/ajstanley/bigwig/all_tracks/gc_content_100.bw',
+     '/share/quonlab/workspaces/ajstanley/bigwig/all_tracks/gc_content_25.bw',
+     '/share/quonlab/workspaces/ajstanley/bigwig/all_tracks/gc_content_250.bw',
+     '/share/quonlab/workspaces/ajstanley/bigwig/all_tracks/gc_content_50.bw',
+     '/share/quonlab/workspaces/ajstanley/bigwig/all_tracks/gc_skew_100.bw',
+     '/share/quonlab/workspaces/ajstanley/bigwig/all_tracks/gc_skew_25.bw',
+     '/share/quonlab/workspaces/ajstanley/bigwig/all_tracks/gc_skew_250.bw',
+     '/share/quonlab/workspaces/ajstanley/bigwig/all_tracks/gc_skew_50.bw',
+     '/share/quonlab/workspaces/ajstanley/bigwig/all_tracks/purine_skew_100.bw',
+     '/share/quonlab/workspaces/ajstanley/bigwig/all_tracks/purine_skew_25.bw',
+     '/share/quonlab/workspaces/ajstanley/bigwig/all_tracks/purine_skew_250.bw',
+     '/share/quonlab/workspaces/ajstanley/bigwig/all_tracks/purine_skew_50.bw']
+StrandedProfile.excl_chromosomes = None
+StrandedProfile.include_classes = False
+
 # Parameters for train:
 # ==============================================================================
 train.batch_size = 16
-train.data = @my_bpnet_data()
-train.early_stop_patience = 100
-train.epochs = 100
+train.data = @bpnet_data()
+train.early_stop_patience = 80
+train.epochs = 50
 train.eval_metric = None
 train.eval_report = @report_template()
 train.eval_skip = []
@@ -213,6 +198,5 @@ train.tensorboard = True
 train.train_batch_sampler = None
 train.train_epoch_frac = 1.0
 train.train_samples_per_epoch = None
-train.trainer_cls = @CpuSeqModelTrainer
 train.valid_epoch_frac = 1.0
 train.validation_samples = None

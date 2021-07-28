@@ -41,7 +41,6 @@ def to_numpy(data):
 
 class Dataset(BaseDataLoader):
     """An abstract class representing a Dataset.
-
     All other datasets should subclass it. All subclasses should override
     ``__len__``, that provides the size of the dataset, and ``__getitem__``,
     supporting integer indexing in range from 0 to len(self) exclusive.
@@ -52,7 +51,6 @@ class Dataset(BaseDataLoader):
     @abc.abstractmethod
     def __getitem__(self, index):
         """Return one sample
-
         index: {0, ..., len(self)-1}
         """
         raise NotImplementedError
@@ -65,9 +63,7 @@ class Dataset(BaseDataLoader):
 
     def _batch_iterable(self, batch_size=32, shuffle=False, num_workers=0, drop_last=False, **kwargs):
         """Return a batch-iteratrable
-
         See batch_iter docs
-
         Returns:
             Iterable
         """
@@ -82,7 +78,6 @@ class Dataset(BaseDataLoader):
 
     def batch_iter(self, batch_size=32, shuffle=False, num_workers=0, drop_last=False, **kwargs):
         """Return a batch-iterator
-
         Arguments:
             dataset (Dataset): dataset from which to load the data.
             batch_size (int, optional): how many samples per batch to load
@@ -96,7 +91,6 @@ class Dataset(BaseDataLoader):
                 if the dataset size is not divisible by the batch size. If False and
                 the size of dataset is not divisible by the batch size, then the last batch
                 will be smaller. (default: False)
-
         Returns:
             iterator
         """
@@ -163,7 +157,6 @@ class NumpyDataset(Dataset):
 
     def __init__(self, data, attrs=None):
         """
-
         Args:
           data: any arbitrarily nested dict/list of np.arrays
             with the same first axis size
@@ -213,7 +206,6 @@ class NumpyDataset(Dataset):
 
     def dapply(self, fn, *args, **kwargs):
         """Apply a function to each element in the list
-
         Returns a nested dictionary
         """
         def _dapply(data, fn, *args, **kwargs):
@@ -235,7 +227,6 @@ class NumpyDataset(Dataset):
 
     def aggregate(self, fn=np.mean, axis=0):
         """Aggregate across all tracks
-
         Args:
           idx: subset index
         """
