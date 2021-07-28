@@ -15,4 +15,4 @@ source ~/.bashrc
 cd /share/quonlab/workspaces/ricsharma/bpnet_on_gpu/bpnet
 conda activate my_bpnet
 export NUMEXPR_MAX_THREADS=64
-bpnet train dataspec.yml --config=config_ongpu.gin . --run-id 'job_31channels_alltracks_nodna_rafter_printtest' --in-memory --gpu=0
+bpnet train dataspec.yml --config=config_ongpu.gin . --run-id 'job_31channels_just500bpp_rafter' --in-memory --gpu=0
