@@ -1,0 +1,17 @@
+{
+  "dataspec": "dataspec.yml",
+  "output_dir": "./result_cpu",
+  "premade": "bpnet9",
+  "config": "config_oncpu.gin",
+  "override": "n_dil_layers=11;train.epochs=1;lr=0.004",
+  "gpu": 0,
+  "memfrac_gpu": 0.45,
+  "num_workers": 8,
+  "vmtouch": false,
+  "in_memory": false,
+  "wandb_project": "",
+  "cometml_project": "",
+  "run_id": "result_cpu",
+  "note_params": "",
+  "overwrite": false
+}
