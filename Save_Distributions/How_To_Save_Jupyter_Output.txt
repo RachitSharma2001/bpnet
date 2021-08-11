@@ -1,0 +1,1 @@
+I saved the output of one cell by printing out some text, then all the images. Then I started by highlighting the text, then highlighting all the images. Then I would scroll up to the text and right click and print -> this saved all the text and all the images.

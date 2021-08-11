@@ -371,7 +371,12 @@ class AddedChannels_StrandedProfile(Dataset):
         if self.added_channel_extractors is not None:
             added_rows = []
             for added_channel in self.added_channel_extractors:
-                added_rows += [added_channel([seq_interval])[0]]
+                new_row = added_channel([seq_interval])[0]
+                if np.any(np.isinf(np.array(new_row))):
+                    raise ValueError("Infinite value occurs at: ", seq_interval)
+                elif np.any(np.isnan(np.array(new_row))):
+                    raise ValueError("Nan value occurs at: ", seq_interval)
+                added_rows += [new_row]
             added_rows = np.swapaxes(np.array(added_rows), 0, 1)
             if self.exclude_dna is False:
                 sequence = np.array([[*x, *y] for x,y in zip(sequence, added_rows)])
@@ -440,7 +445,7 @@ class AddedChannels_StrandedProfile(Dataset):
 # -------------------------------------------------------
 # final datasets returning a (train, validation) tuple
 @gin.configurable
-def my_bpnet_data(dataspec,
+def bpnetgpu_data(dataspec,
                peak_width=1000,
                intervals_file=None,
                intervals_format='bed',

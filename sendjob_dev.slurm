@@ -2,7 +2,7 @@
 #SBATCH --output=/share/quonlab/workspaces/ricsharma/slurm_output/slurm-out-%j
 #SBATCH --error=/share/quonlab/workspaces/ricsharma/slurm_output/slurm-error-%j
 #SBATCH -p dev
-#SBATCH -t 02:00:00
+#SBATCH -t 03:00:00
 #SBATCH --mem 12000
 #SBATCH --gres=gpu:0,gpu_mem:4000
 aklog
@@ -14,4 +14,4 @@ source ~/.bashrc
 cd /share/quonlab/workspaces/ricsharma/bpnet_on_gpu/bpnet
 conda activate my_bpnet
 export NUMEXPR_MAX_THREADS=64
-bpnet train dataspec.yml --config=config_ongpu.gin . --run-id 'job_31channels_just500bpp_dev' --in-memory --gpu=0
+bpnet train dataspec.yml --config=config_ongpu.gin . --run-id 'job_without3_badfiles' --in-memory --gpu=0

@@ -4,8 +4,8 @@ import bpnet.models
 import bpnet.heads
 import bpnet.layers
 import bpnet.seqmodel
-#import bpnet.trainers
-import trainers_ongpu
+import bpnet.trainers
+#import trainers_ongpu
 import bpnet.losses
 #import bpnet.datasets
 import datasets_ongpu
@@ -161,10 +161,7 @@ SeqModel.tasks = %tasks
 
 # Parameters for StrandedProfile:
 # ==============================================================================
-AddedChannels_StrandedProfile.additional_bw_channels = ['/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/Methyl.bw',
-                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/NT2_RNAseq_rep1.bw',
-                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/NT2_RNAseq_rep2.bw',
-                                            '/share/quonlab/workspaces/ricsharma/data/bpp_100_f.bw',
+AddedChannels_StrandedProfile.additional_bw_channels = ['/share/quonlab/workspaces/ricsharma/data/bpp_100_f.bw',
                                             '/share/quonlab/workspaces/ricsharma/data/bpp_100_r.bw',
                                             '/share/quonlab/workspaces/ricsharma/data/bpp_250_f.bw',
                                             '/share/quonlab/workspaces/ricsharma/data/bpp_250_r.bw',
@@ -174,6 +171,7 @@ AddedChannels_StrandedProfile.additional_bw_channels = ['/share/quonlab/workspac
                                             '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/25_neg_purine_skew.bw',
                                             '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/gc_content_25.bw',
                                             '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/gc_skew_50.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/NT2_RNAseq_rep2.bw',
                                             '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/100_neg_purine_skew.bw',
                                             '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/50_neg_gc_skew.bw',
                                             '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/gc_content_50.bw',
@@ -187,10 +185,12 @@ AddedChannels_StrandedProfile.additional_bw_channels = ['/share/quonlab/workspac
                                             '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/250_neg_purine_skew.bw',
                                             '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/gc_content_100.bw',
                                             '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/gc_skew_250.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/Methyl.bw',
                                             '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/purine_skew_25.bw',
                                             '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/25_neg_gc_skew.bw',
                                             '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/gc_content_250.bw',
                                             '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/gc_skew_25.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/NT2_RNAseq_rep1.bw',
                                             '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/purine_skew_50.bw']
 AddedChannels_StrandedProfile.exclude_dna = False
 AddedChannels_StrandedProfile.excl_chromosomes = None
@@ -219,51 +219,21 @@ train.validation_samples = None
 # Added Parameters that depend on CPU or GPU, or changes per model:
 # ==============================================================================
 # Changes to make the multiple channels work
-SeqModel.input_shape = (%seq_width, 32)
+SeqModel.input_shape = (%seq_width, 35)
 
 # Specify additional channels
-AddedChannels_StrandedProfile.additional_bw_channels = ['/share/quonlab/workspaces/ricsharma/data/bpp_100_f.bw',
-                                            '/share/quonlab/workspaces/ricsharma/data/bpp_100_r.bw',
-                                            '/share/quonlab/workspaces/ricsharma/data/bpp_250_f.bw',
-                                            '/share/quonlab/workspaces/ricsharma/data/bpp_250_r.bw',
-                                            '/share/quonlab/workspaces/ricsharma/data/bpp_500_f.bw',
-                                            '/share/quonlab/workspaces/ricsharma/data/bpp_500_r.bw',
-                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/100_neg_gc_skew.bw',
-                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/25_neg_purine_skew.bw',
-                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/gc_content_25.bw',
-                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/gc_skew_50.bw',
-                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/100_neg_purine_skew.bw',
-                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/50_neg_gc_skew.bw',
-                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/gc_content_50.bw',
-                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/GeneAnnotations_neg.bw',
-                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/purine_skew_100.bw',
-                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/250_neg_gc_skew.bw',
-                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/50_neg_purine_skew.bw',
-                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/gc_skew_100.bw',
-                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/GeneAnnotations_pos.bw',
-                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/purine_skew_250.bw',
-                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/250_neg_purine_skew.bw',
-                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/gc_content_100.bw',
-                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/gc_skew_250.bw',
-                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/purine_skew_25.bw',
-                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/25_neg_gc_skew.bw',
-                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/gc_content_250.bw',
-                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/gc_skew_25.bw',
-                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/purine_skew_50.bw']
 AddedChannels_StrandedProfile.exclude_dna = False
 
 # Specify Trainer class
-train.trainer_cls = @GpuSeqModelTrainer
-GpuSeqModelTrainer.batchnorm_begin = 4
-GpuSeqModelTrainer.batchnorm_end = 31
-# Parameter to print input before & after batchnorm
-GpuSeqModelTrainer.print_test = False
-# Parameter to raise runtime error if nan or inf encountered before or after batchnorm
-GpuSeqModelTrainer.test_inf = True
+#train.trainer_cls = @GpuSeqModelTrainer
+#GpuSeqModelTrainer.batchnorm_begin = 4
+#GpuSeqModelTrainer.batchnorm_end = 34
+#GpuSeqModelTrainer.print_test = False
+#GpuSeqModelTrainer.test_inf = False
 
 # Basic training setup
 train.seed = 1
-train.epochs = 40
+train.epochs = 1
 lr = 0.00001
 lambda = 1
 

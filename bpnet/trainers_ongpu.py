@@ -34,6 +34,9 @@ except Exception:
     USE_TORCH = False
 import abc
 
+# Added import for printing mode after batch norm 
+from scipy import stats
+
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
@@ -50,21 +53,39 @@ class BatchNormDataset(NumpyDataset):
         var = np.var(row, axis=0)
         row = np.subtract(row, mean)
         return np.divide(row, np.sqrt(var) + 1e-6)
-
+    
+    # Function to test if any value is inf or nan
+    def test_inf_nan(self, arr):
+        np_arr = np.array(arr)
+        return np.any(np.isinf(np_arr)) or np.any(np.isnan(np_arr))
+    
     # Function to normalize minibatch
     def normalize(self, data):
         # Turn data to numpy array
         np_row = np.array(data['seq'])
-
+        
+        if(self.print_test):
+            print("data: ", data)
+            print("data['seq']: ", data['seq'])
+            print("data['seq'][:,:,0] ", data['seq'][:,:,0])
+            print("len of data['seq'][:,:,0] ", len(data['seq'][:,:,0]))
+            print("len of data['seq'][:,:,0][0] ", len(data['seq'][:,:,0][0]))
+        
         # Normalize each specified column
         for i in range(self.batchnorm_begin, self.batchnorm_end+1):
-            if(self.print_test is True):
+            if(self.print_test):
                 print("We are batchnorming column ", i)
                 print("Before batchnorm: ", data['seq'][:,:,i])
+            if(self.test_inf and self.test_inf_nan(data['seq'][:,:,i])):
+                raise ValueError("Before batchnorm on col ", i, " -> there is an inf or nan at col ", i)
+            
             data['seq'][:,:,i] = self.normalize_column(np_row, i)
-            if(self.print_test is True):
+            
+            if(self.print_test):
                 print("After batchnorm: ", data['seq'][:,:,i])
-
+            if(self.test_inf and self.test_inf_nan(data['seq'][:,:,i])):
+                raise ValueError("After batchnorm on col ", i, " -> there is an inf or nan at col ", i)
+        
         return data
 
     def to_numpy(self, data):
@@ -98,7 +119,8 @@ class BatchNormDataset(NumpyDataset):
         else:
             return ((self.normalize(x["inputs"]), x["targets"]) for x in self.batch_iter(**kwargs))
 
-    def __init__(self, np_dataset, batchnorm_begin, batchnorm_end, attrs=None, print_test=False):
+    def __init__(self, np_dataset, batchnorm_begin, batchnorm_end, attrs=None, 
+                 print_test=False, test_inf=False):
         """
         Args:
           data: any arbitrarily nested dict/list of np.arrays
@@ -109,7 +131,8 @@ class BatchNormDataset(NumpyDataset):
         self.batchnorm_begin = batchnorm_begin
         self.batchnorm_end = batchnorm_end
         self.print_test = print_test
-
+        self.test_inf = test_inf
+        
         if attrs is None:
             self.attrs = OrderedDict()
         else:
@@ -221,8 +244,8 @@ class BatchNormDataset(NumpyDataset):
 
 @gin.configurable
 class GpuSeqModelTrainer:
-    def __init__(self, model, train_dataset, valid_dataset, output_dir,
-                 cometml_experiment=None, wandb_run=None, batchnorm_begin=-1, batchnorm_end=-1, print_test=False):
+    def __init__(self, model, train_dataset, valid_dataset, output_dir, cometml_experiment=None, 
+                 wandb_run=None, batchnorm_begin=-1, batchnorm_end=-1, print_test=False, test_inf=False):
         """
         Args:
           model: compiled keras.Model
@@ -242,9 +265,9 @@ class GpuSeqModelTrainer:
         # override the model class
         self.seq_model = model
         self.model = self.seq_model.model
-
+        
         # Convert the given datasets (of type NumpyDataset) to our own class, which batchnorms input
-        self.train_dataset = BatchNormDataset(train_dataset, batchnorm_begin, batchnorm_end, print_test)
+        self.train_dataset = BatchNormDataset(train_dataset, batchnorm_begin, batchnorm_end, print_test=print_test, test_inf=test_inf)
         self.valid_dataset = [(valid_dataset[0][0], BatchNormDataset(valid_dataset[0][1], batchnorm_begin, batchnorm_end)), (valid_dataset[1][0], BatchNormDataset(valid_dataset[1][1], batchnorm_begin, batchnorm_end))]
 
         # Sanity Check
@@ -302,6 +325,7 @@ class GpuSeqModelTrainer:
             train_it = self.train_dataset.batch_train_iter(batch_size=batch_size,
                                                            shuffle=True,
                                                            num_workers=num_workers)
+        
         count = 0
 
         next(train_it)
