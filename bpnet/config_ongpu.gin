@@ -222,7 +222,10 @@ train.validation_samples = None
 SeqModel.input_shape = (%seq_width, 32)
 
 # Specify additional channels
-AddedChannels_StrandedProfile.additional_bw_channels = ['/share/quonlab/workspaces/ricsharma/data/bpp_100_f.bw',
+AddedChannels_StrandedProfile.additional_bw_channels = ['/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/Methyl.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/NT2_RNAseq_rep1.bw',
+                                            '/share/quonlab/workspaces/ricsharma/all_tracks/bigwig/NT2_RNAseq_rep2.bw',
+                                            '/share/quonlab/workspaces/ricsharma/data/bpp_100_f.bw',
                                             '/share/quonlab/workspaces/ricsharma/data/bpp_100_r.bw',
                                             '/share/quonlab/workspaces/ricsharma/data/bpp_250_f.bw',
                                             '/share/quonlab/workspaces/ricsharma/data/bpp_250_r.bw',
@@ -260,6 +263,8 @@ GpuSeqModelTrainer.batchnorm_end = 31
 GpuSeqModelTrainer.print_test = False
 # Parameter to raise runtime error if nan or inf encountered before or after batchnorm
 GpuSeqModelTrainer.test_inf = True
+GpuSeqModelTrainer.mini_batch_size = 16
+GpuSeqModelTrainer.shuffle_channel_indices = [0,1,2]
 
 # Basic training setup
 train.seed = 1

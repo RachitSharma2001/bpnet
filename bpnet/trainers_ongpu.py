@@ -113,14 +113,36 @@ class BatchNormDataset(NumpyDataset):
           **kwargs: Arguments passed to self.batch_iter(**kwargs)
         """
         
+        mini_batch = self.to_numpy(x["inputs"])
+        
+        if self.shuffled_indices not None:
+            for channel_ind in self.channel_indices:
+                if self.print_test:
+                    print("Channel index: ", channel_ind)
+                    print("mini_batch['seq'][:,:,channel_ind]: ", mini_batch['seq'][:,:,channel_ind])
+                    print("mini_batch['seq'] = ", mini_batch['seq'])
+                # Ex: say mini_batch['seq'][:,:,channel_ind] = 
+                # [[[1, 10, 10],[2, 10, 10],[3,10,10]], [[4, 10, 10],[5, 10, 10],[6,10,10]], [[7, 10, 10],[8, 10, 10],[9,10,10]]]
+                # and shuffle_indices = [2, 1, 0]
+                # mini_batch['seq'][:,:,channel_ind][:,:,0] = [[1, 2, 3], [4, 5, 6], [7,8,9]]
+                # mini_batch['seq'][:,:,channel_ind][self.shuffle_indices] = [[7,8,9],[4,5,6],[1,2,3]]
+                # And then mini_batch['seq'][:,:,channel_ind] = [[[7, 10, 10],[8, 10, 10],[9,10,10]], [[4, 10, 10],[5, 10, 10],[6,10,10]], [[1, 10, 10],[2, 10, 10],[3,10,10]]]
+                mini_batch['seq'][:,:,channel_ind] = mini_batch['seq'][:,:,channel_ind][self.shuffle_indices]
+                
+                if self.print_test:
+                    print("After shuffling by ", self.shuffle_indices)
+                    print("mini_batch['seq'][:,:,channel_ind] now: ", mini_batch['seq'][:,:,channel_ind])
+                    print("mini_batch['seq'] = ", mini_batch['seq'])
+                    print("-----------------------------------------------------------")
+                    print()
         if cycle:
-            return ((self.normalize(self.to_numpy(x["inputs"])), self.to_numpy(x["targets"]))
+            return ((self.normalize(mini_batch), self.to_numpy(x["targets"]))
                     for x in iterable_cycle(self._batch_iterable(**kwargs)))
         else:
             return ((self.normalize(x["inputs"]), x["targets"]) for x in self.batch_iter(**kwargs))
 
     def __init__(self, np_dataset, batchnorm_begin, batchnorm_end, attrs=None, 
-                 print_test=False, test_inf=False):
+                 print_test=False, test_inf=False, channel_indices=None, mini_batch_size=None):
         """
         Args:
           data: any arbitrarily nested dict/list of np.arrays
@@ -132,6 +154,18 @@ class BatchNormDataset(NumpyDataset):
         self.batchnorm_end = batchnorm_end
         self.print_test = print_test
         self.test_inf = test_inf
+        self.channel_indices = channel_indices
+        self.shuffle_indices = None
+        
+        if channel_indices not None:
+            # Later, add code so that we won't need passed in parameter
+            # mini_batch_size = train_dataset[0][0]... size (just get size of 1st minibatch)
+            if mini_batch_size is None:
+                raise ValueError("Please specify mini batch size for GPUSeqModelTrainer in config!")
+            
+            self.shuffle_indices = np.arange(mini_batch_size)
+            # Shuffles 0-15 randomly so we can permute across all minibatches, for all channel indices, in same way
+            np.random.shuffle(self.shuffle_indices)
         
         if attrs is None:
             self.attrs = OrderedDict()
@@ -245,7 +279,8 @@ class BatchNormDataset(NumpyDataset):
 @gin.configurable
 class GpuSeqModelTrainer:
     def __init__(self, model, train_dataset, valid_dataset, output_dir, cometml_experiment=None, 
-                 wandb_run=None, batchnorm_begin=-1, batchnorm_end=-1, print_test=False, test_inf=False):
+                 wandb_run=None, batchnorm_begin=-1, batchnorm_end=-1, print_test=False, test_inf=False, shuffle_channel_indices
+                 =None, mini_batch_size=None):
         """
         Args:
           model: compiled keras.Model
@@ -267,7 +302,7 @@ class GpuSeqModelTrainer:
         self.model = self.seq_model.model
         
         # Convert the given datasets (of type NumpyDataset) to our own class, which batchnorms input
-        self.train_dataset = BatchNormDataset(train_dataset, batchnorm_begin, batchnorm_end, print_test=print_test, test_inf=test_inf)
+        self.train_dataset = BatchNormDataset(train_dataset, batchnorm_begin, batchnorm_end, print_test=print_test, test_inf=test_inf, channel_indices=shuffle_channel_indices, mini_batch_size=mini_batch_size)
         self.valid_dataset = [(valid_dataset[0][0], BatchNormDataset(valid_dataset[0][1], batchnorm_begin, batchnorm_end)), (valid_dataset[1][0], BatchNormDataset(valid_dataset[1][1], batchnorm_begin, batchnorm_end))]
 
         # Sanity Check
