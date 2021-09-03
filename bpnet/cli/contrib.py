@@ -14,7 +14,7 @@ from bpnet.seqmodel import SeqModel
 from bpnet.dataspecs import DataSpec
 from bpnet.functions import mean
 from bpnet.preproc import onehot_dinucl_shuffle
-from bpnet.utils import add_file_logging, fnmatch_any, create_tf_session, read_json
+from bpnet.utils import add_file_logging, fnmatch_any, create_tf_session, read_json, convert_gin_str_to_list
 import h5py
 import logging
 logger = logging.getLogger(__name__)
@@ -124,6 +124,11 @@ def bpnet_contrib(model_dir,
     config = read_json(os.path.join(model_dir, 'config.gin.json'))
     seq_width = config['seq_width']
     peak_width = config['seq_width']
+    additional_input_bigwigs = config['additional_input_bigwigs']
+
+    # Convert to list if needed
+    if isinstance(additional_input_bigwigs, str):
+        additional_input_bigwigs = convert_gin_str_to_list(additional_input_bigwigs)
 
     # NOTE - seq_width has to be the same for the input and the target
     #
@@ -177,7 +182,8 @@ def bpnet_contrib(model_dir,
                                    intervals_file=regions,
                                    peak_width=peak_width,
                                    shuffle=False,
-                                   seq_width=seq_width)
+                                   seq_width=seq_width,
+                                   additional_input_bigwigs=additional_input_bigwigs)
         chrom_sizes = _chrom_sizes(ds.fasta_file)
 
     # Setup contribution score trimming (not required currently)

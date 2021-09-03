@@ -45,7 +45,6 @@ class TsvReader:
                  ):
         """Reads a tsv/BED file in the following format:
         chr  start  stop  [task1  task2 ... ]
-
         Args:
           tsv_file: a tsv file with or without the header (i.e. BED file)
           num_chr: if True, remove the 'chr' prefix if existing in the chromosome names
@@ -58,7 +57,6 @@ class TsvReader:
           chromosome_lens (dict of int): dictionary with chromosome lengths
           resize_width (int): desired interval width. The resize fixes the center
               of the interval.
-
         """
         self.tsv_file = tsv_file
         self.num_chr = num_chr
@@ -206,7 +204,8 @@ def _run_extractors(extractors, intervals, sum_tracks=False):
 
 @gin.configurable
 class StrandedProfile(Dataset):
-
+    # Added extra array that holds the additional bw channels
+    # Specified in format [path_to_file1, path_to_file2, ...]
     def __init__(self, ds,
                  peak_width=200,
                  seq_width=None,
@@ -220,9 +219,10 @@ class StrandedProfile(Dataset):
                  shuffle=True,
                  interval_transformer=None,
                  track_transform=None,
-                 total_count_transform=lambda x: np.log(1 + x)):
+                 total_count_transform=lambda x: np.log(1 + x),
+                 additional_input_bigwigs=None,
+                 exclude_dna=False):
         """Dataset for loading the bigwigs and fastas
-
         Args:
           ds (bpnet.dataspecs.DataSpec): data specification containing the
             fasta file, bed files and bigWig file paths
@@ -256,10 +256,13 @@ class StrandedProfile(Dataset):
         self.total_count_transform = total_count_transform
         self.track_transform = track_transform
         self.include_classes = include_classes
+        self.additional_input_bigwigs = additional_input_bigwigs
+        self.exclude_dna = exclude_dna
         # not specified yet
         self.fasta_extractor = None
         self.bw_extractors = None
         self.bias_bw_extractors = None
+        self.added_channel_extractors = None
         self.include_metadata = include_metadata
         self.interval_transformer = interval_transformer
 
@@ -349,6 +352,12 @@ class StrandedProfile(Dataset):
         if self.interval_transformer is not None:
             interval = self.interval_transformer(interval)
 
+        # Add the extra channels specified through config
+        if self.additional_input_bigwigs is not None and len(self.additional_input_bigwigs) > 0:
+            self.added_channel_extractors = []
+            for file in self.additional_input_bigwigs:
+                self.added_channel_extractors += [BigwigExtractor(file)]
+
         # resize the intervals to the desired widths
         target_interval = resize_interval(deepcopy(interval), self.peak_width)
         seq_interval = resize_interval(deepcopy(interval), self.seq_width)
@@ -359,6 +368,22 @@ class StrandedProfile(Dataset):
 
         # extract DNA sequence + one-hot encode it
         sequence = self.fasta_extractor([seq_interval])[0]
+        # Check if there are added channels, if so add them to sequence
+        if self.added_channel_extractors is not None:
+            added_rows = []
+            for added_channel in self.added_channel_extractors:
+                new_row = added_channel([seq_interval])[0]
+                if np.any(np.isinf(np.array(new_row))):
+                    raise ValueError("Infinite value occurs at: ", seq_interval)
+                elif np.any(np.isnan(np.array(new_row))):
+                    raise ValueError("Nan value occurs at: ", seq_interval)
+                added_rows += [new_row]
+            added_rows = np.swapaxes(np.array(added_rows), 0, 1)
+            if self.exclude_dna is False:
+                sequence = np.array([[*x, *y] for x,y in zip(sequence, added_rows)])
+            else:
+                sequence = np.array(added_rows)
+        
         inputs = {"seq": sequence}
 
         # exctract the profile counts from the bigwigs
@@ -437,7 +462,6 @@ def bpnet_data(dataspec,
                interval_augmentation_shift=200,
                tasks=None):
     """BPNet default data-loader
-
     Args:
       tasks: specify a subset of the tasks to use in the dataspec.yml. If None, all tasks will be specified.
     """

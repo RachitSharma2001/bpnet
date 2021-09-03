@@ -15,6 +15,8 @@ import logging
 logger = logging.getLogger(__name__)
 logger.addHandler(logging.NullHandler())
 
+# added here
+import ast
 
 def jupyter_nbconvert(input_ipynb):
     # NOTE: cwd is used since the input_ipynb could contain some strange output
@@ -359,17 +361,16 @@ def create_tf_session(visiblegpus, per_process_gpu_memory_fraction=0.45):
     os.environ['CUDA_VISIBLE_DEVICES'] = str(visiblegpus)
     session_config = tf.ConfigProto()
     # session_config.gpu_options.deferred_deletion_bytes = DEFER_DELETE_SIZE
-    if per_process_gpu_memory_fraction==1:
-        session_config.gpu_options.allow_growth = True
-    else:
-        session_config.gpu_options.per_process_gpu_memory_fraction = per_process_gpu_memory_fraction
-    session_config.gpu_options.polling_inactive_delay_msecs = 50
+    session_config.gpu_options.per_process_gpu_memory_fraction = per_process_gpu_memory_fraction
     session = tf.Session(config=session_config)
     K.set_session(session)
-    #K.backend.set_session(session)
     return session
 
 
+def convert_gin_str_to_list(list_str):
+    assert len(list_str) > 3
+    return ast.literal_eval(list_str[2:])
+    
 class SerializableLock(object):
     _locks = WeakValueDictionary()
     """ A Serializable per-process Lock

@@ -174,6 +174,63 @@ class DilatedConv1D:
                 d -= 2 * dillation
             return d
 
+@gin.configurable
+class DilatedConv1DBatchNormInput(DilatedConv1D):
+    """Wrapper around DilateConv1d but batchnorms inputs
+    that are not DNA ( first four rows)
+    """
+
+    def __init__(self, filters=21,
+                 conv1_kernel_size=25,
+                 n_dil_layers=6,
+                 skip_type='residual',  # or 'dense', None
+                 padding='same',
+                 batchnorm=False,
+                 add_pointwise=False,
+                 batch_norm_input=True,
+                 exclude_dna=False):
+        # modified from parent
+        self.batch_norm_input = batch_norm_input
+        self.exclude_dna = exclude_dna
+        #print("batchnorminput: ", batch_norm_input)
+        #print("exclude_dna: ", exclude_dna)
+
+        # from parent
+        self.filters = filters
+        self.conv1_kernel_size = conv1_kernel_size
+        self.n_dil_layers = n_dil_layers
+        self.skip_type = skip_type
+        self.padding = padding
+        self.batchnorm = batchnorm
+        self.add_pointwise = add_pointwise
+    
+    def __call__(self, inp):
+        """
+        TODO:
+        Make more modular by preventing splitting if there is nothing to split
+        """
+        #print("Input: ", inp)
+        
+        secondary_channels = kl.Lambda(lambda x: x[:,:,0:])(inp)
+        if not self.exclude_dna:
+            secondary_channels = kl.Lambda(lambda x: x[:,:,4:])(inp)
+            #print("Moved to channels 4")
+        
+        #print("Secondary channels before batchnorm: ", secondary_channels)
+        if self.batch_norm_input:
+            secondary_channels = kl.BatchNormalization()(secondary_channels)
+            #print("After batchnorm: ", secondary_channels)
+        
+        if self.exclude_dna:
+            #print("We are done")
+            return super().__call__(secondary_channels)
+        
+        DNA_channels = kl.Lambda(lambda x: x[:,:,0:4])(inp)
+        x = kl.Concatenate(axis=2)([DNA_channels, secondary_channels])
+        #print("dna_channels", DNA_channels)
+        #print("secondary_channels after batchnorm",secondary_channels)
+        #print("X: ", x)
+        return super().__call__(x)
 
 @gin.configurable
 class DeConv1D:

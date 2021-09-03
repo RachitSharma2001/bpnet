@@ -151,6 +151,10 @@ class SeqModel:
         # input_tensor = self._get_input_tensor()
         input_tensor = self.model.inputs
 
+        print("length of input tensor:", len(input_tensor))
+        print("input tensor type", type(input_tensor[0]))
+        print("input tensor shape", input_tensor[0].shape)
+
         if isinstance(x, list):
             x_subset = [ix[:1] for ix in x]
         elif isinstance(x, dict):
